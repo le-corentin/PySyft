@@ -59,7 +59,13 @@ class BaseWorker(AbstractWorker):
     """
 
     def __init__(
-        self, hook, id=0, data=None, is_client_worker=False, log_msgs=False, verbose=False
+        self,
+        hook,
+        id: int=0,
+        data: List[Union[torch.Tensor, AbstractTensor]]=None,
+        is_client_worker: bool=False,
+        log_msgs: bool=False,
+        verbose: bool=False
     ):
         """Initializes a BaseWorker."""
 
@@ -348,7 +354,12 @@ class BaseWorker(AbstractWorker):
                 )
                 raise ResponseSignatureError(return_ids.generated)
 
-    def send_command(self, recipient, message, return_ids=None):
+    def send_command(
+            self,
+            recipient: "BaseWorker",
+            message,
+            return_ids: List[int]=None
+    ) -> List[sy.PointerTensor]:
         """
         Send a command through a message to a recipient worker
         :param recipient:
@@ -439,7 +450,7 @@ class BaseWorker(AbstractWorker):
 
         return obj
 
-    def respond_to_obj_req(self, obj_id):
+    def respond_to_obj_req(self, obj_id: Union[str, int]) -> object:
         """Returns the deregistered object from registry.
 
         Args:
@@ -450,7 +461,7 @@ class BaseWorker(AbstractWorker):
         self.de_register_obj(obj)
         return obj
 
-    def register_obj(self, obj, obj_id=None):
+    def register_obj(self, obj: Union[torch.Tensor, AbstractTensor], obj_id: Union[str, int]=None):
         """Registers the specified object with the current worker node.
 
         Selects an id for the object, assigns a list of owners, and establishes
@@ -467,7 +478,7 @@ class BaseWorker(AbstractWorker):
                 obj.id = obj_id
             self.set_obj(obj)
 
-    def de_register_obj(self, obj, _recurse_torch_objs=True):
+    def de_register_obj(self, obj: Union[torch.Tensor, AbstractTensor], _recurse_torch_objs: bool=True):
         """Deregisters the specified object.
 
         Deregister and remove attributes which are indicative of registration.
@@ -484,7 +495,7 @@ class BaseWorker(AbstractWorker):
         if hasattr(obj, "_owner"):
             del obj._owner
 
-    def rm_obj(self, remote_key):
+    def rm_obj(self, remote_key: Union[str, int]):
         """Removes an object.
 
         Remove the object from the permanent object registry if it exists.
@@ -498,7 +509,7 @@ class BaseWorker(AbstractWorker):
 
     # SECTION: convenience methods for constructing frequently used messages
 
-    def send_obj(self, obj, location):
+    def send_obj(self, obj: str, location: "BaseWorker") -> object:
         """Send a torch object to a worker.
 
         Args:
@@ -508,7 +519,7 @@ class BaseWorker(AbstractWorker):
         """
         return self.send_msg(MSGTYPE.OBJ, obj, location)
 
-    def request_obj(self, obj_id, location):
+    def request_obj(self, obj_id: Union[str, int], location: "BaseWorker"):
         """Returns the requested object from specified location.
 
         Args:
@@ -524,7 +535,11 @@ class BaseWorker(AbstractWorker):
 
     # SECTION: Manage the workers network
 
-    def get_worker(self, id_or_worker, fail_hard=False):
+    def get_worker(
+            self,
+            id_or_worker: Union[str, int, "BaseWorker"],
+            fail_hard: bool=False
+    ) -> Union[str, int, "BaseWorker"]:
         """Returns the worker id or instance.
 
         Allows for resolution of worker ids to workers to happen automatically
@@ -583,7 +598,7 @@ class BaseWorker(AbstractWorker):
 
         return id_or_worker
 
-    def add_worker(self, worker):
+    def add_worker(self, worker: "BaseWorker"):
         """Adds a single worker.
 
         Adds a worker to the list of _known_workers internal to the BaseWorker.
@@ -630,7 +645,7 @@ class BaseWorker(AbstractWorker):
             )
         self._known_workers[worker.id] = worker
 
-    def add_workers(self, workers):
+    def add_workers(self, workers: List["BaseWorker"]):
         """Adds several workers in a single call.
 
         Args:
@@ -639,7 +654,7 @@ class BaseWorker(AbstractWorker):
         for worker in workers:
             self.add_worker(worker)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Returns the string representation of BaseWorker.
 
         A to-string method for all classes that extend BaseWorker.
